@@ -1,6 +1,7 @@
 /target
 /output
 /output_
+/ref*
 /image_check
 /P128*
 test_*
