@@ -5,6 +5,7 @@ use std::fs::File;
 use std::io::Read;
 use image::{GenericImageView};
 use std::thread;
+use std::process::ExitCode;
 
 const EPS: u8 = 5;
 
@@ -52,8 +53,12 @@ fn compare_images(path_ref: &String, path_out: &String) -> ErrorTypes {
 	ErrorTypes::AllGood
 }
 
-fn main() {
+fn main() -> ExitCode {
     let args: Vec<String> = env::args().collect();
+    if env::args().len() < 3 {
+        eprintln!("Usage: {} <json-file-path> <test-name>", &args[0]);
+    }
+
     let test_name = &args[2];
 
     let mut file = File::open("tests.json").unwrap();
@@ -86,22 +91,28 @@ fn main() {
 
     match error {
         ErrorTypes::BadSizes(a, b) => {
-            println!("Mismatched sizes: {:?} vs {:?}", a, b);
+            eprintln!("Mismatched sizes: {:?} vs {:?}", a, b);
+            return ExitCode::FAILURE;
         },
         ErrorTypes::NoOutput(name) => {
-            println!("{name} was not found");
+            eprintln!("{name} was not found");
+            return ExitCode::FAILURE;
         },
         ErrorTypes::NoRef(name) => {
-            println!("{name} ref is missing");
+            eprintln!("{name} ref is missing");
+            return ExitCode::FAILURE;
         },
         ErrorTypes::EPSError(name, diff, x, y) => {
-            println!("File {name} has a differnce more than {EPS} ({diff}) at {x}, {y}");
+            eprintln!("File {name} has a differnce more than {EPS} ({diff}) at {x}, {y}");
+            return ExitCode::FAILURE;
         },
         ErrorTypes::BadTypes => {
-            println!("The images are not the same type");
+            eprintln!("The images are not the same type");
+            return ExitCode::FAILURE;
         },
         ErrorTypes::AllGood => { 
-            println!();
+            eprintln!();
+            return ExitCode::SUCCESS;
         }
     }
 }
